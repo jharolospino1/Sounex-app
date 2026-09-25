@@ -90,7 +90,8 @@ async function save(e){e.preventDefault();const f=e.target,id=f.dataset.id,old=s
  if(ha&&!/^audio\//.test(au.type)&&!/\.(mp3|m4a|wav|ogg|flac|aac|opus)$/i.test(au.name))return er("El archivo de audio no es válido.");
  if(hc&&!/^image\//.test(cv.type))return er("La portada debe ser una imagen.");
  er("");b.disabled=true;b.textContent="Guardando…";const up=[];
- try{const put=async(bk,file)=>{const p=crypto.randomUUID()+"."+(file.name.split(".").pop()||"bin").toLowerCase(),{error}=await sb.storage.from(bk).upload(p,file,{contentType:file.type||undefined,cacheControl:"3600"});if(error)throw error;up.push([bk,p]);return p};
+ try{const MT={mp3:"audio/mpeg",m4a:"audio/mp4",wav:"audio/wav",ogg:"audio/ogg",oga:"audio/ogg",flac:"audio/flac",aac:"audio/aac",opus:"audio/opus",weba:"audio/webm",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",gif:"image/gif"};
+ const put=async(bk,file)=>{const ext=(file.name.split(".").pop()||"bin").toLowerCase(),p=crypto.randomUUID()+"."+ext,ct=MT[ext]||file.type||"application/octet-stream",{error}=await sb.storage.from(bk).upload(p,file,{contentType:ct,cacheControl:"3600",upsert:false});if(error)throw error;up.push([bk,p]);return p};
   const row={title:fd.get("title").trim(),artist:fd.get("artist").trim(),album:fd.get("album").trim()||null,genre:fd.get("genre").trim()||null,year:fd.get("year")?+fd.get("year"):null,description:fd.get("description").trim()||null};
   if(ha)row.audio_path=await put("audio",au);if(hc)row.cover_path=await put("covers",cv);
   const q=id?sb.from("songs").update(row).eq("id",id):sb.from("songs").insert(row),{data,error}=await q.select("id");
