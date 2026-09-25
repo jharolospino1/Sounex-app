@@ -213,9 +213,9 @@ addEventListener("appinstalled",()=>{dip=null;toast("Sounex instalada");if(tab==
 function install(){if(isApp()){toast("Sounex ya está instalada");return}if(dip){dip.prompt();dip.userChoice.finally(()=>{dip=null;if(tab=="home")view()})}else toast("Usa el menú del navegador y elige Instalar app")}
 function instCard(){return (isApp()||!/^https?:/.test(location.protocol))?"":`<div class="ins"><div><b>Descarga Sounex</b><span>Instálala en tu celular y ábrela como una app.</span></div><button class="btn" data-ins>Descargar</button></div>`}
 if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-let REAL=false;const au=new Audio();
+let REAL=false,auIdx=null;const au=new Audio();
 const P=[["#a238ff","#2a1050"],["#ff4d8d","#3a0f2e"],["#2fd1c5","#0b2f3a"],["#ffb02e","#4a2200"],["#5b8cff","#101f4a"],["#ff5a3c","#40120a"],["#9be564","#12321a"]];
-function aud(){if(!REAL||!T[cur])return;if(au.dataset.i!=cur){au.dataset.i=cur;au.src=T[cur].src}
+function aud(){if(!REAL||!T[cur])return;if(auIdx!==cur){auIdx=cur;au.src=T[cur].src}
  if(Math.abs(au.currentTime-el)>1.5)au.currentTime=el;
  if(playing&&au.paused)au.play().catch(()=>{playing=false;mini();toast("No se pudo reproducir esta canción")});else if(!playing&&!au.paused)au.pause()}
 au.onended=()=>{if(rep==2){au.currentTime=0;au.play()}else nxt(true)};
@@ -227,7 +227,7 @@ async function initReal(){const C=window.SOUNEX||{};if(!C.url||!C.key||!window.s
  T.length=0;DU.length=0;AL.length=0;AR.length=0;MX.length=0;GE.length=0;fav.clear();
  data.forEach((r,i)=>{const p=P[i%7],e=[r.title,r.artist,p[0],p[1]];e.src=pu("audio",r.audio_path);e.img=pu("covers",r.cover_path);T.push(e);DU.push(1);AL.push(r.album||"Sencillo");
   if(!AR.some(a=>a[0]==r.artist))AR.push([r.artist,p[0]]);if(i<4)MX.push([r.title,i]);if(r.genre&&!GE.some(g=>g[0]==r.genre))GE.push([r.genre,p[0]])});
- cur=0;el=0;playing=false;au.removeAttribute("src");au.dataset.i="";REAL=true;view();mini()}catch(e){}}
+ cur=0;el=0;playing=false;au.removeAttribute("src");auIdx=null;REAL=true;view();mini()}catch(e){}}
 addEventListener("load",initReal);
 nav();view();mini();
 setTimeout(()=>{const e=$("#sp");e.classList.add("out");setTimeout(()=>e.remove(),600)},2300);
