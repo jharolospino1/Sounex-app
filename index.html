@@ -110,6 +110,7 @@ svg.f{fill:currentColor;stroke:none}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}#sp .nm span,#sp .ld i{animation-duration:.01s!important;animation-delay:0s!important}}
 </style></head><body>
 <div id="sp" aria-hidden="true"><div class="nm"><span style="--i:0">S</span><span style="--i:1">o</span><span style="--i:2">u</span><span style="--i:3">n</span><span style="--i:4">e</span><span style="--i:5">x</span></div><div class="ld"><i></i></div></div>
+<div id="au" role="dialog" aria-modal="true" aria-label="Cuenta"></div>
 <div id="app"></div>
 <div id="mini" role="region" aria-label="Reproductor">
 <div class="sq" id="mc"></div><div id="mi" role="button" tabindex="0" aria-label="Abrir reproductor"><b id="mt"></b><em id="ma"></em></div>
@@ -222,14 +223,50 @@ function aud(){if(!REAL||!T[cur])return;if(auIdx!==cur){auIdx=cur;au.src=T[cur].
 au.onended=()=>{if(rep==2){au.currentTime=0;au.play()}else nxt(true)};
 au.onloadedmetadata=()=>{if(REAL&&T[cur]){DU[cur]=au.duration||1;npv()}};
 au.onerror=()=>{if(REAL&&au.getAttribute("src"))toast("No se pudo cargar el audio")};
-async function initReal(){const C=window.SOUNEX||{};if(!C.url||!C.key||!window.supabase)return;
- try{const sb=supabase.createClient(C.url,C.key),{data,error}=await sb.from("songs").select("*").order("created_at",{ascending:false});if(error||!data||!data.length)return;
- const pu=(b,p)=>p?sb.storage.from(b).getPublicUrl(p).data.publicUrl:"";
- const{data:ar}=await sb.from("artists").select("*"),artPh={};(ar||[]).forEach(a=>artPh[a.name]=pu("artists",a.photo_path));
+let sb=null;function client(){const C=window.SOUNEX||{};if(!C.url||!C.key||!window.supabase)return null;if(!sb)sb=supabase.createClient(C.url,C.key);return sb}
+async function initReal(){const c=client();if(!c)return;
+ try{const{data,error}=await c.from("songs").select("*").order("created_at",{ascending:false});if(error||!data||!data.length)return;
+ const pu=(b,p)=>p?c.storage.from(b).getPublicUrl(p).data.publicUrl:"";
+ const{data:ar}=await c.from("artists").select("*"),artPh={};(ar||[]).forEach(a=>artPh[a.name]=pu("artists",a.photo_path));
  T.length=0;DU.length=0;AL.length=0;AR.length=0;MX.length=0;GE.length=0;fav.clear();
  data.forEach((r,i)=>{const p=P[i%7],e=[r.title,r.artist,p[0],p[1]];e.src=pu("audio",r.audio_path);e.img=pu("covers",r.cover_path);T.push(e);DU.push(1);AL.push(r.album||"Sencillo");
   if(!AR.some(a=>a[0]==r.artist))AR.push([r.artist,p[0],artPh[r.artist]||""]);if(i<4)MX.push([r.title,i]);if(r.genre&&!GE.some(g=>g[0]==r.genre))GE.push([r.genre,p[0]])});
  cur=0;el=0;playing=false;au.removeAttribute("src");auIdx=null;REAL=true;view();mini()}catch(e){}}
+
+let authUser=null,authMode="choice",authEm="";
+const AUI={g:'<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 01-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.4 1.1-3.9 1.1-3 0-5.5-2-6.4-4.8H1.8v3C3.7 21.3 7.5 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.6a7.2 7.2 0 010-4.6v-3H1.8a12 12 0 000 10.6z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.5 0 3.7 2.7 1.8 6.6l3.8 3c.9-2.8 3.4-4.8 6.4-4.8z"/></svg>',
+ f:'<svg viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12a12 12 0 10-13.9 11.9v-8.4H7.1V12h3v-2.6c0-3 1.8-4.6 4.5-4.6 1.3 0 2.6.2 2.6.2v2.9h-1.5c-1.5 0-1.9.9-1.9 1.8V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0024 12z"/></svg>'};
+function authRender(){const e=$("#au");if(!authUser===false){}
+ if(authMode=="hide"){e.style.display="none";return}e.style.display="flex";const er=(id)=>`<p class="err" id="${id}" role="alert"></p>`;
+ const social=`<div class="soc"><button data-soc="google">${AUI.g}Continuar con Google</button><button data-soc="facebook">${AUI.f}Continuar con Facebook</button></div><p class="or">o con tu correo</p>`;
+ if(authMode=="choice")e.innerHTML=`<div class="bg" data-skip></div><div class="sh"><div class="lg">Sounex</div><p class="mu">Inicia sesión para guardar tus favoritos y tu música.</p><button class="op pri" data-am="login">Iniciar sesión con cuenta existente</button><button class="op" data-am="register">Registrarme</button><button class="skip" data-skip>Ahora no</button></div>`;
+ if(authMode=="login")e.innerHTML=`<div class="bg" data-skip></div><div class="sh"><span class="back" data-am="choice">←</span><div class="lg">Iniciar sesión</div>${social}<form id="lf"><label>Correo<input type="email" id="lem" autocomplete="username" required></label><label>Contraseña<input type="password" id="lpw" autocomplete="current-password" required></label>${er("lerr")}<button class="op pri" style="margin-top:16px">Entrar</button></form><p class="swap">¿No tienes cuenta? <b data-am="register">Regístrate</b></p></div>`;
+ if(authMode=="register")e.innerHTML=`<div class="bg" data-skip></div><div class="sh"><span class="back" data-am="choice">←</span><div class="lg">Crear cuenta</div>${social}<form id="rf"><label>Correo<input type="email" id="rem" autocomplete="username" required></label><label>Contraseña (mínimo 8 caracteres)<input type="password" id="rpw" autocomplete="new-password" required></label><label>Repite la contraseña<input type="password" id="rpw2" autocomplete="new-password" required></label>${er("rerr")}<button class="op pri" style="margin-top:16px">Crear cuenta</button></form><p class="swap">¿Ya tienes cuenta? <b data-am="login">Inicia sesión</b></p></div>`;
+ if(authMode=="otp")e.innerHTML=`<div class="bg"></div><div class="sh"><div class="lg">Confirma tu correo</div><p class="mu">Te enviamos un código de 6 dígitos a ${authEm}.</p><form id="of"><div class="otpi"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="otp" autocomplete="one-time-code" required></div>${er("oerr")}<button class="op pri" style="margin-top:16px">Confirmar</button></form><p class="swap">¿No llegó? <b data-am="resend">Reenviar código</b></p></div>`;
+ wireAuthForms()}
+function wireAuthForms(){const lf=$("#lf"),rf=$("#rf"),of=$("#of");
+ if(lf)lf.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=lf.querySelector("button"),er=$("#lerr");if(!c)return er.textContent="La cuenta aún no está conectada.";b.disabled=true;
+  const{error}=await c.auth.signInWithPassword({email:$("#lem").value.trim(),password:$("#lpw").value});
+  if(error)er.textContent="Correo o contraseña incorrectos.";else{authMode="hide";authRender();toast("Sesión iniciada")}b.disabled=false};
+ if(rf)rf.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=rf.querySelector("button"),er=$("#rerr"),em=$("#rem").value.trim(),pw=$("#rpw").value;if(!c)return er.textContent="La cuenta aún no está conectada.";
+  if(pw.length<8)return er.textContent="La contraseña debe tener al menos 8 caracteres.";
+  if(pw!==$("#rpw2").value)return er.textContent="Las contraseñas no coinciden.";
+  b.disabled=true;const{error}=await c.auth.signUp({email:em,password:pw});
+  if(error)er.textContent=error.message.includes("registered")?"Ese correo ya tiene cuenta.":"No se pudo crear la cuenta.";
+  else{authEm=em;authMode="otp";authRender();toast("Te enviamos un código a tu correo")}b.disabled=false};
+ if(of)of.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=of.querySelector("button"),er=$("#oerr"),tok=$("#otp").value.trim();if(!c)return;
+  b.disabled=true;const{error}=await c.auth.verifyOtp({email:authEm,token:tok,type:"signup"});
+  if(error)er.textContent="Código incorrecto o vencido.";else{authMode="hide";authRender();toast("Cuenta confirmada")}b.disabled=false}}
+$("#au").addEventListener("click",e=>{const b=e.target.closest("[data-am],[data-skip],[data-soc]");if(!b)return;
+ if(b.dataset.skip!==undefined){authMode="hide";authRender();return}
+ if(b.dataset.am=="resend"){const c=client();if(c&&authEm)c.auth.resend({type:"signup",email:authEm});toast("Código reenviado");return}
+ if(b.dataset.am){authMode=b.dataset.am;authRender();return}
+ if(b.dataset.soc){const c=client();if(!c)return;c.auth.signInWithOAuth({provider:b.dataset.soc,options:{redirectTo:location.href}}).then(({error})=>{if(error)toast("Ese inicio de sesión aún no está configurado")});return}});
+async function authBoot(){const c=client();if(!c){authMode="hide";return}
+ const{data}=await c.auth.getSession();authUser=data.session?data.session.user:null;
+ authMode=authUser?"hide":"choice";authRender();
+ c.auth.onAuthStateChange((ev,session)=>{authUser=session?session.user:null;if(authUser&&authMode!="hide"){authMode="hide";authRender()}})}
+addEventListener("load",authBoot);
 addEventListener("load",initReal);
 nav();view();mini();
 setTimeout(()=>{const e=$("#sp");e.classList.add("out");setTimeout(()=>e.remove(),600)},2300);
