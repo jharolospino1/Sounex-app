@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#17141f"><title>Sounex · Administración</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
+<style>
+:root{--bg:#0f0d14;--bar:#17141f;--card:#1e1a28;--ln:#2a2536;--ac:#a238ff;--tx:#fff;--mu:#9d98ab;--rd:#ff6b81;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.mu{color:var(--mu)}.btn{background:var(--ac);padding:11px 18px;border-radius:10px;font-weight:700}.btn:disabled{opacity:.6}.btn.g{background:var(--bar)}.btn.dg{background:#c0364d}
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.box{width:100%;max-width:380px;background:var(--card);border-radius:16px;padding:28px}
+.lg{font-size:32px;font-weight:800;letter-spacing:-.04em}
+label{display:block;color:var(--mu);font-size:13px;margin:14px 0 0}
+input,select,textarea{display:block;width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:11px 12px}
+input[type=file]{padding:8px}
+.err{color:var(--rd);min-height:20px;margin:12px 0 0;font-size:14px}
+#app{display:flex;min-height:100vh}
+#sb{width:230px;flex:none;background:var(--bar);border-right:1px solid var(--ln);padding:20px 12px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+#sb .lg{padding:0 10px 18px;font-size:24px}
+#sb nav{flex:1;display:flex;flex-direction:column;gap:4px}
+#sb nav button,#sb .ft a,#sb .ft button{width:100%;text-align:left;padding:11px 12px;border-radius:10px;color:var(--mu);display:block;text-decoration:none}
+#sb nav button[aria-current=true]{background:#3a2160;color:#fff}
+main{flex:1;min-width:0;padding:0 24px 40px}
+.top{display:flex;align-items:center;gap:14px;padding:18px 0}.top h1{margin:0;font-size:26px;letter-spacing:-.03em;flex:1}#mn{display:none;font-size:22px;padding:4px 8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.c{background:var(--card);border-radius:14px;padding:18px}.c b{display:block;font-size:34px;letter-spacing:-.03em}.c span{color:var(--mu)}
+h2{font-size:18px;margin:26px 0 10px}
+.tb{background:var(--card);border-radius:14px;overflow:hidden}
+.sr{display:grid;grid-template-columns:52px 1.6fr 1fr 1fr 110px auto;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--ln)}
+.sr:last-child{border:0}.sr.h{color:var(--mu);font-size:13px}
+.cv img,.cv .ph{width:48px;height:48px;border-radius:8px;object-fit:cover;display:block;background:linear-gradient(135deg,#a238ff,#2a1050)}
+.tt b,.tt em{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tt em{font-style:normal;color:var(--mu);font-size:13px}
+.x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mu)}
+.ac{display:flex;gap:6px}.ac button{padding:7px 12px;border-radius:8px;background:var(--bar)}.ac .dg{color:var(--rd)}
+.emp{padding:24px;text-align:center}
+dialog{border:0;border-radius:18px;background:var(--card);color:var(--tx);width:min(560px,calc(100% - 24px));max-height:calc(100vh - 24px);padding:22px}
+dialog::backdrop{background:rgba(0,0,0,.65)}dialog h3{margin:0 0 4px;font-size:20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.ba{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+#ts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#111;padding:11px 18px;border-radius:24px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}#ts.on{opacity:1}
+@media(max-width:860px){#sb{position:fixed;z-index:20;transform:translateX(-100%);transition:transform .2s}#sb.open{transform:none}#mn{display:block}main{padding:0 14px 40px}.sr{grid-template-columns:48px 1fr auto}.x,.sr.h{display:none}.g2{grid-template-columns:1fr}#who{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<section id="login"><form class="box" id="lf"><div class="lg">Sounex</div><p class="mu" style="margin:4px 0 0">Panel de administración</p><label>Correo<input type="email" id="em" autocomplete="username" required></label><label>Contraseña<input type="password" id="pw" autocomplete="current-password" required></label><p class="err" id="le" role="alert"></p><button class="btn" id="lb" style="width:100%">Iniciar sesión</button><button type="button" class="btn g" id="dm" style="width:100%;margin-top:10px">Vista previa sin conexión</button></form></section>
+<div id="app" hidden>
+<aside id="sb"><div class="lg">Sounex</div><nav><button data-v="dash">Dashboard</button><button data-v="songs">Canciones</button><button data-v="artists">Artistas</button><button data-v="albums">Álbumes</button><button data-v="stats">Estadísticas</button><button data-v="cfg">Configuración</button></nav><div class="ft"><a href="index.html">Ver la app</a><button id="lo">Cerrar sesión</button></div></aside>
+<main><div class="top"><button id="mn" aria-label="Abrir menú">☰</button><h1 id="ttl"></h1><span class="mu" id="who"></span></div><div id="vw"></div></main></div>
+<dialog id="md"></dialog><dialog id="cf"></dialog><div id="ts" role="status"></div>
+<script>
+const C=window.SOUNEX||{},$=s=>document.querySelector(s),esc=x=>String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TT={dash:"Dashboard",songs:"Canciones",artists:"Artistas",albums:"Álbumes",stats:"Estadísticas",cfg:"Configuración"};
+let sb,me=null,songs=[],view="dash";
+function toast(m){const e=$("#ts");e.textContent=m;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),2600)}
+const pub=(b,p)=>p&&sb?sb.storage.from(b).getPublicUrl(p).data.publicUrl:"";
+const DP=["#a238ff,#2a1050","#ff4d8d,#3a0f2e","#2fd1c5,#0b2f3a","#ffb02e,#4a2200"];
+async function boot(){$("#dm").onclick=demo;if(!C.url||!C.key||!window.supabase){$("#le").textContent="Aún no está conectado a Supabase: usa «Vista previa sin conexión» para ver el diseño, o completa config.js para conectar tu cuenta real.";$("#lb").disabled=true;return}
+ sb=supabase.createClient(C.url,C.key);const{data}=await sb.auth.getSession();if(data.session)enter(data.session.user)}
+$("#lf").onsubmit=async e=>{e.preventDefault();if(!sb)return;const b=$("#lb");b.disabled=true;$("#le").textContent="";
+ const{data,error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+ if(error)$("#le").textContent="Correo o contraseña incorrectos.";else await enter(data.user);b.disabled=false};
+async function enter(u){const{data,error}=await sb.from("admins").select("user_id").eq("user_id",u.id).maybeSingle();
+ if(error||!data){await sb.auth.signOut();$("#le").textContent="Esta cuenta no tiene permisos de administrador.";return}
+ me=u;$("#login").hidden=true;$("#app").hidden=false;$("#who").textContent=u.email;await load();go("dash")}
+async function out(){if(sb)await sb.auth.signOut();location.reload()}
+function demo(){me={email:"vista-previa@sounex.app"};
+ songs=[["A media luz","Nova Ríos","Un canto de luz","Urbano",2026,1],["Cielo de neón","Lumen","Cielo de neón","Pop",2025,2],["Ruta 45","Kairo","Rutas","Electrónica",2025,3],["Domingo","Nova Ríos","Un canto de luz","Chill",2026,4]].map((r,i)=>({id:"demo-"+i,title:r[0],artist:r[1],album:r[2],genre:r[3],year:r[4],description:"",audio_path:null,cover_path:null,created_at:new Date(Date.now()-r[5]*86400000).toISOString(),_demo:true}));
+ $("#login").hidden=true;$("#app").hidden=false;$("#who").textContent="Vista previa";go("dash")}
+async function load(){if(me&&me.email==="vista-previa@sounex.app")return;const{data,error}=await sb.from("songs").select("*").order("created_at",{ascending:false});if(error)toast("No se pudieron cargar las canciones");songs=data||[]}
+const grp=f=>{const m=new Map();songs.forEach(s=>{const k=f(s);if(k)m.set(k,(m.get(k)||0)+1)});return[...m]};
+const cov=s=>s.cover_path?`<img src="${esc(pub("covers",s.cover_path))}" alt="" loading="lazy">`:`<span class="ph" style="background:linear-gradient(135deg,${DP[Math.abs(s.title.length+s.artist.length)%DP.length]})"></span>`;
+function rows(l,act){return l.length?`<div class="tb">`+(act?`<div class="sr h"><span></span><span>Título</span><span>Álbum</span><span>Género</span><span>Publicada</span><span></span></div>`:"")+l.map(s=>`<div class="sr"><span class="cv">${cov(s)}</span><span class="tt"><b>${esc(s.title)}</b><em>${esc(s.artist)}</em></span><span class="x">${esc(s.album||"—")}</span><span class="x">${esc(s.genre||"—")}</span><span class="x">${new Date(s.created_at).toLocaleDateString("es")}</span>${act?`<span class="ac"><button data-e="${s.id}">Editar</button><button class="dg" data-d="${s.id}">Eliminar</button></span>`:"<span></span>"}</div>`).join("")+`</div>`:`<p class="mu emp">Aún no hay canciones. Agrega la primera con «+ Agregar canción».</p>`}
+const lst=a=>a.length?`<div class="tb">`+a.map(x=>`<div class="sr" style="grid-template-columns:1fr auto"><span class="tt"><b>${esc(x[0])}</b>${x[2]?`<em>${esc(x[2])}</em>`:""}</span><span class="mu">${x[1]} canción${x[1]>1?"es":""}</span></div>`).join("")+`</div>`:`<p class="mu emp">Todavía no hay datos.</p>`;
+function render(){const v=$("#vw");
+ if(view=="dash")v.innerHTML=`<div class="cards"><div class="c"><b>${songs.length}</b><span>Canciones</span></div><div class="c"><b>${grp(s=>s.artist).length}</b><span>Artistas</span></div><div class="c"><b>${grp(s=>s.album).length}</b><span>Álbumes</span></div></div><h2>Agregadas recientemente</h2>${rows(songs.slice(0,5))}`;
+ if(view=="songs")v.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn" data-a="new">+ Agregar canción</button></div>${rows(songs,1)}`;
+ if(view=="artists")v.innerHTML=lst(grp(s=>s.artist));
+ if(view=="albums")v.innerHTML=lst(grp(s=>s.album?s.album+"\u0001"+s.artist:"").map(([k,n])=>{const p=k.split("\u0001");return[p[0],n,p[1]]}));
+ if(view=="stats")v.innerHTML=`<p class="mu">Aún no se registran reproducciones, así que no hay conteos de escucha. Cuando la app las guarde, aparecerán aquí.</p><h2>Canciones por género</h2>${lst(grp(s=>s.genre))}`;
+ if(view=="cfg")v.innerHTML=`<div class="tb" style="padding:18px"><p style="margin:0 0 4px" class="mu">Sesión iniciada como</p><b>${esc(me.email)}</b><p class="mu">Para cambiar la contraseña o agregar otros administradores usa el panel de Supabase.</p><button class="btn g" id="lo2">Cerrar sesión</button></div>`}
+function go(v){view=v;$("#ttl").textContent=TT[v];document.querySelectorAll("#sb nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.v==v));$("#sb").classList.remove("open");render()}
+function form(id){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Supabase para guardar de verdad");return}
+ const s=songs.find(x=>x.id==id)||{},m=$("#md"),gs=grp(x=>x.genre).map(g=>`<option value="${esc(g[0])}">`).join("");
+ m.innerHTML=`<form id="sf" data-id="${esc(id||"")}"><h3>${id?"Editar canción":"Agregar canción"}</h3><label>Archivo de audio${id?" (opcional: reemplaza el actual)":""}<input type="file" name="audio" accept="audio/*"></label><label>Portada (opcional${id?": reemplaza la actual":""})<input type="file" name="cover" accept="image/*"></label><label>Título<input name="title" required maxlength="150" value="${esc(s.title)}"></label><div class="g2"><label>Artista<input name="artist" required maxlength="120" value="${esc(s.artist)}"></label><label>Álbum<input name="album" maxlength="120" value="${esc(s.album)}"></label><label>Género<input name="genre" list="gl" maxlength="60" value="${esc(s.genre)}"><datalist id="gl">${gs}</datalist></label><label>Año<input name="year" type="number" min="1900" max="${new Date().getFullYear()+1}" value="${esc(s.year)}"></label></div><label>Descripción (opcional)<textarea name="description" rows="3" maxlength="600">${esc(s.description)}</textarea></label><p class="err" id="fe" role="alert"></p><div class="ba"><button type="button" class="btn g" id="fc">Cancelar</button><button class="btn" id="sv">Guardar</button></div></form>`;
+ $("#fc").onclick=()=>m.close();$("#sf").onsubmit=save;m.showModal()}
+async function rm(l){const by={};l.filter(x=>x[1]).forEach(x=>(by[x[0]]=by[x[0]]||[]).push(x[1]));for(const k in by){const{error}=await sb.storage.from(k).remove(by[k]);if(error)toast("Algunos archivos no se pudieron borrar")}}
+async function save(e){e.preventDefault();const f=e.target,id=f.dataset.id,old=songs.find(s=>s.id==id),fd=new FormData(f),au=fd.get("audio"),cv=fd.get("cover"),b=$("#sv"),er=t=>{$("#fe").textContent=t},ha=au&&au.size>0,hc=cv&&cv.size>0;
+ if(!id&&!ha)return er("Selecciona el archivo de audio.");
+ if(ha&&!/^audio\//.test(au.type)&&!/\.(mp3|m4a|wav|ogg|flac|aac|opus)$/i.test(au.name))return er("El archivo de audio no es válido.");
+ if(hc&&!/^image\//.test(cv.type))return er("La portada debe ser una imagen.");
+ er("");b.disabled=true;b.textContent="Guardando…";const up=[];
+ try{const put=async(bk,file)=>{const p=crypto.randomUUID()+"."+(file.name.split(".").pop()||"bin").toLowerCase(),{error}=await sb.storage.from(bk).upload(p,file,{contentType:file.type||undefined,cacheControl:"3600"});if(error)throw error;up.push([bk,p]);return p};
+  const row={title:fd.get("title").trim(),artist:fd.get("artist").trim(),album:fd.get("album").trim()||null,genre:fd.get("genre").trim()||null,year:fd.get("year")?+fd.get("year"):null,description:fd.get("description").trim()||null};
+  if(ha)row.audio_path=await put("audio",au);if(hc)row.cover_path=await put("covers",cv);
+  const q=id?sb.from("songs").update(row).eq("id",id):sb.from("songs").insert(row),{data,error}=await q.select("id");
+  if(error||!data||!data.length)throw error||new Error("No tienes permiso para guardar cambios.");
+  if(old)await rm([ha&&["audio",old.audio_path],hc&&["covers",old.cover_path]].filter(Boolean));
+  $("#md").close();toast(id?"Cambios guardados":"Canción agregada");await load();render()}
+ catch(x){await rm(up);er(x.message||"No se pudo guardar.")}
+ b.disabled=false;b.textContent="Guardar"}
+function ask(id){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Supabase para eliminar de verdad");return}
+ const s=songs.find(x=>x.id==id),m=$("#cf");
+ m.innerHTML=`<h3>Eliminar canción</h3><p>¿Eliminar «${esc(s.title)}»? Se borrarán la canción, su audio y su portada. No se puede deshacer.</p><div class="ba"><button class="btn g" id="n0">Cancelar</button><button class="btn dg" id="y0">Eliminar</button></div>`;
+ $("#n0").onclick=()=>m.close();
+ $("#y0").onclick=async()=>{const b=$("#y0");b.disabled=true;const{data,error}=await sb.from("songs").delete().eq("id",id).select("id");
+  if(error||!data||!data.length){toast("No se pudo eliminar");b.disabled=false;return}
+  await rm([["audio",s.audio_path],["covers",s.cover_path]]);m.close();toast("Canción eliminada");await load();render()};m.showModal()}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
+ if(d.v)go(d.v);else if(b.id=="mn")$("#sb").classList.toggle("open");else if(b.id=="lo"||b.id=="lo2")out();
+ else if(d.a=="new")form();else if(d.e)form(d.e);else if(d.d)ask(d.d)});
+addEventListener("load",boot);
+</script></body></html>
