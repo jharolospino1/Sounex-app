@@ -1,3 +1,1 @@
-// Configuración pública de Supabase (Project Settings → API).
-// La clave "anon" es pública por diseño: la seguridad real la dan las reglas de setup.sql.
-window.SOUNEX = { url: "", key: "" };
+window.SOUNEX = { url: "https://rvfkhchvtwqligeefbhq.supabase.co", key: "sb_publishable_HzzeRAd1zlzR_8rb1F6BDQ_rqoSn1oG" };
