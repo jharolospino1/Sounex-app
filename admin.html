@@ -51,7 +51,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}dialog h3{margin:0 0 4px;font-size:2
 <script>
 const C=window.SOUNEX||{},$=s=>document.querySelector(s),esc=x=>String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const TT={dash:"Dashboard",songs:"Canciones",artists:"Artistas",albums:"Álbumes",stats:"Estadísticas",cfg:"Configuración"};
-let sb,me=null,songs=[],view="dash";
+let sb,me=null,songs=[],artistsMap={},view="dash";
 function toast(m){const e=$("#ts");e.textContent=m;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),2600)}
 const pub=(b,p)=>p&&sb?sb.storage.from(b).getPublicUrl(p).data.publicUrl:"";
 const DP=["#a238ff,#2a1050","#ff4d8d,#3a0f2e","#2fd1c5,#0b2f3a","#ffb02e,#4a2200"];
@@ -67,15 +67,18 @@ async function out(){if(sb)await sb.auth.signOut();location.reload()}
 function demo(){me={email:"vista-previa@sounex.app"};
  songs=[["A media luz","Nova Ríos","Un canto de luz","Urbano",2026,1],["Cielo de neón","Lumen","Cielo de neón","Pop",2025,2],["Ruta 45","Kairo","Rutas","Electrónica",2025,3],["Domingo","Nova Ríos","Un canto de luz","Chill",2026,4]].map((r,i)=>({id:"demo-"+i,title:r[0],artist:r[1],album:r[2],genre:r[3],year:r[4],description:"",audio_path:null,cover_path:null,created_at:new Date(Date.now()-r[5]*86400000).toISOString(),_demo:true}));
  $("#login").hidden=true;$("#app").hidden=false;$("#who").textContent="Vista previa";go("dash")}
-async function load(){if(me&&me.email==="vista-previa@sounex.app")return;const{data,error}=await sb.from("songs").select("*").order("created_at",{ascending:false});if(error)toast("No se pudieron cargar las canciones");songs=data||[]}
+async function load(){if(me&&me.email==="vista-previa@sounex.app")return;const{data,error}=await sb.from("songs").select("*").order("created_at",{ascending:false});if(error)toast("No se pudieron cargar las canciones");songs=data||[];
+ const{data:ar}=await sb.from("artists").select("*");artistsMap={};(ar||[]).forEach(a=>artistsMap[a.name]=a.photo_path)}
 const grp=f=>{const m=new Map();songs.forEach(s=>{const k=f(s);if(k)m.set(k,(m.get(k)||0)+1)});return[...m]};
 const cov=s=>s.cover_path?`<img src="${esc(pub("covers",s.cover_path))}" alt="" loading="lazy">`:`<span class="ph" style="background:linear-gradient(135deg,${DP[Math.abs(s.title.length+s.artist.length)%DP.length]})"></span>`;
+const aph=n=>{const p=artistsMap[n];return p?`<img src="${esc(pub("artists",p))}" alt="" loading="lazy">`:`<span class="ph" style="background:linear-gradient(135deg,${DP[Math.abs(String(n).length)%DP.length]})"></span>`};
 function rows(l,act){return l.length?`<div class="tb">`+(act?`<div class="sr h"><span></span><span>Título</span><span>Álbum</span><span>Género</span><span>Publicada</span><span></span></div>`:"")+l.map(s=>`<div class="sr"><span class="cv">${cov(s)}</span><span class="tt"><b>${esc(s.title)}</b><em>${esc(s.artist)}</em></span><span class="x">${esc(s.album||"—")}</span><span class="x">${esc(s.genre||"—")}</span><span class="x">${new Date(s.created_at).toLocaleDateString("es")}</span>${act?`<span class="ac"><button data-e="${s.id}">Editar</button><button class="dg" data-d="${s.id}">Eliminar</button></span>`:"<span></span>"}</div>`).join("")+`</div>`:`<p class="mu emp">Aún no hay canciones. Agrega la primera con «+ Agregar canción».</p>`}
 const lst=a=>a.length?`<div class="tb">`+a.map(x=>`<div class="sr" style="grid-template-columns:1fr auto"><span class="tt"><b>${esc(x[0])}</b>${x[2]?`<em>${esc(x[2])}</em>`:""}</span><span class="mu">${x[1]} canción${x[1]>1?"es":""}</span></div>`).join("")+`</div>`:`<p class="mu emp">Todavía no hay datos.</p>`;
+const artistsList=a=>a.length?`<div class="tb">`+a.map(x=>`<div class="sr" style="grid-template-columns:52px 1fr auto auto"><span class="cv">${aph(x[0])}</span><span class="tt"><b>${esc(x[0])}</b></span><span class="mu">${x[1]} canción${x[1]>1?"es":""}</span><span class="ac"><button data-ae="${esc(x[0])}">Editar</button></span></div>`).join("")+`</div>`:`<p class="mu emp">Todavía no hay artistas.</p>`;
 function render(){const v=$("#vw");
  if(view=="dash")v.innerHTML=`<div class="cards"><div class="c"><b>${songs.length}</b><span>Canciones</span></div><div class="c"><b>${grp(s=>s.artist).length}</b><span>Artistas</span></div><div class="c"><b>${grp(s=>s.album).length}</b><span>Álbumes</span></div></div><h2>Agregadas recientemente</h2>${rows(songs.slice(0,5))}`;
  if(view=="songs")v.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn" data-a="new">+ Agregar canción</button></div>${rows(songs,1)}`;
- if(view=="artists")v.innerHTML=lst(grp(s=>s.artist));
+ if(view=="artists")v.innerHTML=artistsList(grp(s=>s.artist));
  if(view=="albums")v.innerHTML=lst(grp(s=>s.album?s.album+"\u0001"+s.artist:"").map(([k,n])=>{const p=k.split("\u0001");return[p[0],n,p[1]]}));
  if(view=="stats")v.innerHTML=`<p class="mu">Aún no se registran reproducciones, así que no hay conteos de escucha. Cuando la app las guarde, aparecerán aquí.</p><h2>Canciones por género</h2>${lst(grp(s=>s.genre))}`;
  if(view=="cfg")v.innerHTML=`<div class="tb" style="padding:18px"><p style="margin:0 0 4px" class="mu">Sesión iniciada como</p><b>${esc(me.email)}</b><p class="mu">Para cambiar la contraseña o agregar otros administradores usa el panel de Supabase.</p><button class="btn g" id="lo2">Cerrar sesión</button></div>`}
@@ -100,6 +103,22 @@ async function save(e){e.preventDefault();const f=e.target,id=f.dataset.id,old=s
   $("#md").close();toast(id?"Cambios guardados":"Canción agregada");await load();render()}
  catch(x){await rm(up);er(x.message||"No se pudo guardar.")}
  b.disabled=false;b.textContent="Guardar"}
+function artistForm(name){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Supabase para editar de verdad");return}
+ const m=$("#md"),ph=artistsMap[name],cur=ph?pub("artists",ph):"";
+ m.innerHTML=`<form id="af" data-old="${esc(name)}"><h3>Editar artista</h3><label>Nombre<input name="name" required maxlength="120" value="${esc(name)}"></label><label>Foto${cur?" (opcional: reemplaza la actual)":""}<input type="file" name="photo" accept="image/*"></label>${cur?`<p class="mu" style="margin-top:8px">Foto actual: <a href="${esc(cur)}" target="_blank" rel="noopener">ver</a></p>`:""}<p class="err" id="fe2" role="alert"></p><div class="ba"><button type="button" class="btn g" id="afc">Cancelar</button><button class="btn" id="afs">Guardar</button></div></form>`;
+ $("#afc").onclick=()=>m.close();$("#af").onsubmit=saveArtist;m.showModal()}
+async function saveArtist(e){e.preventDefault();const f=e.target,old=f.dataset.old,fd=new FormData(f),name=fd.get("name").trim(),ph=fd.get("photo"),hp=ph&&ph.size>0,b=$("#afs"),er=t=>$("#fe2").textContent=t;
+ if(!name)return er("Escribe un nombre.");
+ if(hp&&!/^image\//.test(ph.type))return er("La foto debe ser una imagen.");
+ er("");b.disabled=true;b.textContent="Guardando…";
+ try{let path=artistsMap[old]||null;
+  if(hp){const ext=(ph.name.split(".").pop()||"jpg").toLowerCase(),p=crypto.randomUUID()+"."+ext,ct=MT[ext]||ph.type||"image/jpeg",{error}=await sb.storage.from("artists").upload(p,ph,{contentType:ct,cacheControl:"3600"});if(error)throw error;path=p}
+  if(name!==old){const{error:e1}=await sb.from("songs").update({artist:name}).eq("artist",old);if(e1)throw e1}
+  const{error:e2}=await sb.from("artists").upsert({name,photo_path:path});if(e2)throw e2;
+  if(name!==old&&artistsMap[old]!==undefined){await sb.from("artists").delete().eq("name",old)}
+  $("#md").close();toast("Artista actualizado");await load();render()}
+ catch(x){er(x.message||"No se pudo guardar.")}
+ b.disabled=false;b.textContent="Guardar"}
 function ask(id){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Supabase para eliminar de verdad");return}
  const s=songs.find(x=>x.id==id),m=$("#cf");
  m.innerHTML=`<h3>Eliminar canción</h3><p>¿Eliminar «${esc(s.title)}»? Se borrarán la canción, su audio y su portada. No se puede deshacer.</p><div class="ba"><button class="btn g" id="n0">Cancelar</button><button class="btn dg" id="y0">Eliminar</button></div>`;
@@ -109,6 +128,6 @@ function ask(id){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Sup
   await rm([["audio",s.audio_path],["covers",s.cover_path]]);m.close();toast("Canción eliminada");await load();render()};m.showModal()}
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
  if(d.v)go(d.v);else if(b.id=="mn")$("#sb").classList.toggle("open");else if(b.id=="lo"||b.id=="lo2")out();
- else if(d.a=="new")form();else if(d.e)form(d.e);else if(d.d)ask(d.d)});
+ else if(d.a=="new")form();else if(d.e)form(d.e);else if(d.d)ask(d.d);else if(d.ae)artistForm(d.ae)});
 addEventListener("load",boot);
 </script></body></html>
