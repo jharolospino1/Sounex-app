@@ -207,7 +207,7 @@ function npv(){const e=$("#np");if(!npOpen){e.style.display="none";return}e.styl
  const c=$("#ncv");let x0=null;c.onpointerdown=ev=>{x0=ev.clientX};c.onpointerup=ev=>{if(x0===null)return;const dx=ev.clientX-x0;x0=null;if(dx<-50)nxt();else if(dx>50)prv()};shv()}
 function shv(){const h=$("#sh");if(!h)return;if(!sheet){h.className="";h.innerHTML="";return}h.className="on";const t=T[cur],o=(a,n,l,c)=>`<button class="o ${c||""}" ${a}>${n?ic(n):""}<span>${l}</span></button>`;let b="";
  if(sheet=="lyr")b=`<h3>Letras</h3><p class="mu">Aún no hay letra disponible para esta canción.</p>`;
- if(sheet=="opt")b=`<h3>${t[0]}</h3>`+o('data-nd="ar"',"sea","Ver artista")+o('data-nd="fav"',"fav",fav.has(cur)?"Quitar de favoritos":"Añadir a favoritos")+o('data-nd="shr"',"shr","Compartir")+o('data-nd="slp"',"tmr","Temporizador")+o('data-nd="que"',"que","Ver cola");
+ if(sheet=="opt")b=`<h3>${t[0]}</h3>`+o('data-nd="ar"',"sea","Ver artista")+o('data-nd="fav"',"fav",fav.has(cur)?"Quitar de favoritos":"Añadir a favoritos")+o('data-nd="dl"',dls.has(t.id)?"dlok":"dl",dlBusy.has(t.id)?"Descargando…":dls.has(t.id)?"Quitar descarga":isPremium?"Descargar para escuchar sin conexión":"Descargar (función Premium)")+o('data-nd="shr"',"shr","Compartir")+o('data-nd="slp"',"tmr","Temporizador")+o('data-nd="que"',"que","Ver cola");
  if(sheet=="que")b=`<h3>A continuación</h3>`+T.map((_,i)=>i).map(i=>`<button class="o ${i==cur?"on":""}" data-nq="${i}"><span style="width:44px;height:44px;border-radius:6px;flex:none;background:${cv(i)}"></span><span style="flex:1"><b>${T[i][0]}</b><br><em class="mu">${T[i][1]}</em></span></button>`).join("");
  if(sheet=="slp")b=`<h3>Temporizador</h3>`+(sleepEnd?`<p class="mu">Se pausará a las ${new Date(sleepEnd).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}.</p>`:"")+[["5","5 minutos"],["15","15 minutos"],["30","30 minutos"],["60","1 hora"],["0","Desactivar"]].map(x=>o(`data-sl="${x[0]}"`,"",x[1])).join("");
  if(sheet=="dev")b=`<h3>Dispositivos</h3>`+o("","phn","Este dispositivo","on")+`<p class="mu">Transmitir a otros dispositivos aún no está disponible.</p>`;
@@ -228,6 +228,7 @@ $("#np").addEventListener("click",e=>{const b=e.target.closest("[data-nd],[data-
  else if(a=="shr"){sheet=null;shv();const x={title:T[cur][0],text:T[cur][0]+" - "+T[cur][1]+" en Sounex"};if(navigator.share)navigator.share(x).catch(()=>{});else toast("Compartir no está disponible en este navegador")}
  else if(a=="fav"){fav.has(cur)?fav.delete(cur):fav.add(cur);sheet=null;mini();if(tab=="fav")view()}
  else if(a=="ar"){q=T[cur][1];closeNP();go("sea")}
+ else if(a=="dl"){sheet=null;shv();toggleDownload(cur)}
  else if(a=="rep"){rep=(rep+1)%3;npv()}
  else if(a=="shf"){shuf=!shuf;npv()}
  else if(a=="prv")prv();
@@ -244,9 +245,23 @@ function install(){if(isApp()){toast("Sounex ya está instalada");return}if(dip)
 function instCard(){return (isApp()||!/^https?:/.test(location.protocol))?"":`<div class="ins"><div><b>Descarga Sounex</b><span>Instálala en tu celular y ábrela como una app.</span></div><button class="btn" data-ins>Descargar</button></div>`}
 if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 let REAL=false,auIdx=null;const au=new Audio();au.setAttribute("playsinline","");au.style.display="none";document.body.appendChild(au);
+let isPremium=false,dls=new Set(),dlBusy=new Set();
+const ddb=new Promise((r,j)=>{try{const o=indexedDB.open("sounex_dl",1);o.onupgradeneeded=()=>o.result.createObjectStore("f");o.onsuccess=()=>r(o.result);o.onerror=()=>j(o.error)}catch(e){j(e)}});
+const dtx=async(m,f)=>{const d=await ddb;return new Promise((r,j)=>{const t=d.transaction("f",m),q=f(t.objectStore("f"));t.oncomplete=()=>r(q&&q.result);t.onerror=()=>j(t.error)})};
+async function refreshDls(){try{dls=new Set(((await dtx("readonly",s=>s.getAllKeys()))||[]).map(String))}catch(e){}}
+async function toggleDownload(i){if(!authUser){toast("Inicia sesión para descargar canciones");return}
+ if(!isPremium){toast("Descargar canciones sin conexión es una función Premium");return}
+ const id=T[i].id;if(dlBusy.has(id))return;
+ if(dls.has(id)){dlBusy.add(id);try{await dtx("readwrite",s=>s.delete(id));dls.delete(id);toast("Descarga eliminada")}catch(e){toast("No se pudo eliminar la descarga")}dlBusy.delete(id);if(tab)view();return}
+ dlBusy.add(id);toast("Descargando…");
+ try{const r=await fetch(T[i].src);if(!r.ok)throw 0;const b=await r.blob();await dtx("readwrite",s=>s.put(b,id));dls.add(id);toast("Canción descargada")}
+ catch(e){toast("No se pudo descargar la canción")}
+ dlBusy.delete(id);view()}
 const P=[["#a238ff","#2a1050"],["#ff4d8d","#3a0f2e"],["#2fd1c5","#0b2f3a"],["#ffb02e","#4a2200"],["#5b8cff","#101f4a"],["#ff5a3c","#40120a"],["#9be564","#12321a"]];
 function msess(){if(!("mediaSession" in navigator)||!T[cur])return;try{navigator.mediaSession.metadata=new MediaMetadata({title:T[cur][0],artist:T[cur][1],artwork:T[cur].img?[{src:T[cur].img,sizes:"512x512",type:"image/jpeg"}]:[]});navigator.mediaSession.playbackState=playing?"playing":"paused";navigator.mediaSession.setActionHandler("play",()=>{playing=true;mini()});navigator.mediaSession.setActionHandler("pause",()=>{playing=false;mini()});navigator.mediaSession.setActionHandler("previoustrack",()=>prv());navigator.mediaSession.setActionHandler("nexttrack",()=>nxt())}catch(e){}}
-function aud(){if(!REAL||!T[cur])return;if(auIdx!==cur){auIdx=cur;au.src=T[cur].src}
+function aud(){if(!REAL||!T[cur])return;if(auIdx!==cur){auIdx=cur;
+  if(dls.has(T[cur].id)){dtx("readonly",s=>s.get(T[cur].id)).then(b=>{if(b&&auIdx==cur)au.src=URL.createObjectURL(b)}).catch(()=>{au.src=T[cur].src});au.removeAttribute("src")}
+  else au.src=T[cur].src}
  if(Math.abs(au.currentTime-el)>1.5)au.currentTime=el;
  if(playing&&au.paused)au.play().catch(()=>{playing=false;mini();toast("No se pudo reproducir esta canción")});else if(!playing&&!au.paused)au.pause();msess()}
 au.onended=()=>{if(rep==2){au.currentTime=0;au.play()}else nxt(true)};
@@ -258,12 +273,13 @@ async function initReal(){const c=client();if(!c)return;
  const pu=(b,p)=>p?c.storage.from(b).getPublicUrl(p).data.publicUrl:"";
  const{data:ar}=await c.from("artists").select("*"),artPh={};(ar||[]).forEach(a=>artPh[a.name]=pu("artists",a.photo_path));
  T.length=0;DU.length=0;AL.length=0;AR.length=0;MX.length=0;GE.length=0;fav.clear();
- data.forEach((r,i)=>{const p=P[i%7],e=[r.title,r.artist,p[0],p[1]];e.src=pu("audio",r.audio_path);e.img=pu("covers",r.cover_path);T.push(e);DU.push(1);AL.push(r.album||"Sencillo");
+ data.forEach((r,i)=>{const p=P[i%7],e=[r.title,r.artist,p[0],p[1]];e.id=r.id;e.src=pu("audio",r.audio_path);e.img=pu("covers",r.cover_path);T.push(e);DU.push(1);AL.push(r.album||"Sencillo");
   if(!AR.some(a=>a[0]==r.artist))AR.push([r.artist,p[0],artPh[r.artist]||""]);if(i<4)MX.push([r.title,i]);if(r.genre&&!GE.some(g=>g[0]==r.genre))GE.push([r.genre,p[0]])});
  cur=0;el=0;playing=false;au.removeAttribute("src");auIdx=null;REAL=true;view();mini()}catch(e){}}
 
 let authUser=null,authMode="login",authEm="";
 const WAVES=`<svg viewBox="0 0 400 300" preserveAspectRatio="none"><path d="M-20 90 C 80 40, 160 140, 260 80 S 420 20, 460 70" fill="none" stroke="#7c3aed" stroke-opacity=".55" stroke-width="2"/><path d="M-20 150 C 90 210, 170 90, 280 160 S 430 220, 470 150" fill="none" stroke="#7c3aed" stroke-opacity=".35" stroke-width="2"/></svg>`;
+I.dl='<circle cx="12" cy="12" r="9"/><path d="M12 7v8M8 12l4 4 4-4"/>';I.dlok='<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>';I.lock='<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/>';
 const NOTE=`<svg class="note" viewBox="0 0 100 100"><defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs><path fill="url(#ng)" d="M62 12v46a15 15 0 10 9 13.7V34l14-4V18z"/></svg>`;
 const AUI={g:'<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 01-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.4 1.1-3.9 1.1-3 0-5.5-2-6.4-4.8H1.8v3C3.7 21.3 7.5 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.6a7.2 7.2 0 010-4.6v-3H1.8a12 12 0 000 10.6z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.5 0 3.7 2.7 1.8 6.6l3.8 3c.9-2.8 3.4-4.8 6.4-4.8z"/></svg>',
  f:'<svg viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12a12 12 0 10-13.9 11.9v-8.4H7.1V12h3v-2.6c0-3 1.8-4.6 4.5-4.6 1.3 0 2.6.2 2.6.2v2.9h-1.5c-1.5 0-1.9.9-1.9 1.8V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0024 12z"/></svg>'};
@@ -303,10 +319,14 @@ $("#au").addEventListener("click",e=>{const b=e.target.closest("[data-am],[data-
  if(b.dataset.am=="resend"){const c=client();if(c&&authEm)c.auth.resend({type:"signup",email:authEm});toast("Código reenviado");return}
  if(b.dataset.am){authMode=b.dataset.am;authRender();return}
  if(b.dataset.soc){const c=client();if(!c)return;c.auth.signInWithOAuth({provider:b.dataset.soc,options:{redirectTo:location.href}}).then(({error})=>{if(error)toast("Ese inicio de sesión aún no está configurado")});return}});
-async function authBoot(){const c=client();if(!c){authMode="hide";return}
+async function loadPremium(){if(!authUser){isPremium=false;return}const c=client();if(!c)return;
+ try{await c.from("profiles").insert({user_id:authUser.id}).select()}catch(e){}
+ const{data}=await c.from("profiles").select("is_premium").eq("user_id",authUser.id).maybeSingle();
+ isPremium=!!(data&&data.is_premium);if(npOpen)npv()}
+async function authBoot(){refreshDls();const c=client();if(!c){authMode="hide";return}
  const{data}=await c.auth.getSession();authUser=data.session?data.session.user:null;
- authMode=authUser?"hide":"login";authRender();
- c.auth.onAuthStateChange((ev,session)=>{authUser=session?session.user:null;if(authUser&&authMode!="hide"){authMode="hide";authRender()}})}
+ authMode=authUser?"hide":"login";authRender();await loadPremium();
+ c.auth.onAuthStateChange((ev,session)=>{authUser=session?session.user:null;if(authUser&&authMode!="hide"){authMode="hide";authRender()}loadPremium()})}
 addEventListener("load",authBoot);
 addEventListener("load",initReal);
 nav();view();mini();
