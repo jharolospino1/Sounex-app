@@ -45,13 +45,13 @@ dialog::backdrop{background:rgba(0,0,0,.65)}dialog h3{margin:0 0 4px;font-size:2
 </style></head><body>
 <section id="login"><form class="box" id="lf"><div class="lg">Sounex</div><p class="mu" style="margin:4px 0 0">Panel de administración</p><label>Correo<input type="email" id="em" autocomplete="username" required></label><label>Contraseña<input type="password" id="pw" autocomplete="current-password" required></label><p class="err" id="le" role="alert"></p><button class="btn" id="lb" style="width:100%">Iniciar sesión</button><button type="button" class="btn g" id="dm" style="width:100%;margin-top:10px">Vista previa sin conexión</button></form></section>
 <div id="app" hidden>
-<aside id="sb"><div class="lg">Sounex</div><nav><button data-v="dash">Dashboard</button><button data-v="songs">Canciones</button><button data-v="artists">Artistas</button><button data-v="albums">Álbumes</button><button data-v="stats">Estadísticas</button><button data-v="cfg">Configuración</button></nav><div class="ft"><a href="index.html">Ver la app</a><button id="lo">Cerrar sesión</button></div></aside>
+<aside id="sb"><div class="lg">Sounex</div><nav><button data-v="dash">Dashboard</button><button data-v="songs">Canciones</button><button data-v="artists">Artistas</button><button data-v="albums">Álbumes</button><button data-v="users">Usuarios</button><button data-v="stats">Estadísticas</button><button data-v="cfg">Configuración</button></nav><div class="ft"><a href="index.html">Ver la app</a><button id="lo">Cerrar sesión</button></div></aside>
 <main><div class="top"><button id="mn" aria-label="Abrir menú">☰</button><h1 id="ttl"></h1><span class="mu" id="who"></span></div><div id="vw"></div></main></div>
 <dialog id="md"></dialog><dialog id="cf"></dialog><div id="ts" role="status"></div>
 <script>
 const C=window.SOUNEX||{},$=s=>document.querySelector(s),esc=x=>String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const TT={dash:"Dashboard",songs:"Canciones",artists:"Artistas",albums:"Álbumes",stats:"Estadísticas",cfg:"Configuración"};
-let sb,me=null,songs=[],artistsMap={},view="dash";
+const TT={dash:"Dashboard",songs:"Canciones",artists:"Artistas",albums:"Álbumes",users:"Usuarios",stats:"Estadísticas",cfg:"Configuración"};
+let sb,me=null,songs=[],artistsMap={},users=[],view="dash";
 function toast(m){const e=$("#ts");e.textContent=m;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),2600)}
 const pub=(b,p)=>p&&sb?sb.storage.from(b).getPublicUrl(p).data.publicUrl:"";
 const DP=["#a238ff,#2a1050","#ff4d8d,#3a0f2e","#2fd1c5,#0b2f3a","#ffb02e,#4a2200"];
@@ -68,7 +68,8 @@ function demo(){me={email:"vista-previa@sounex.app"};
  songs=[["A media luz","Nova Ríos","Un canto de luz","Urbano",2026,1],["Cielo de neón","Lumen","Cielo de neón","Pop",2025,2],["Ruta 45","Kairo","Rutas","Electrónica",2025,3],["Domingo","Nova Ríos","Un canto de luz","Chill",2026,4]].map((r,i)=>({id:"demo-"+i,title:r[0],artist:r[1],album:r[2],genre:r[3],year:r[4],description:"",audio_path:null,cover_path:null,created_at:new Date(Date.now()-r[5]*86400000).toISOString(),_demo:true}));
  $("#login").hidden=true;$("#app").hidden=false;$("#who").textContent="Vista previa";go("dash")}
 async function load(){if(me&&me.email==="vista-previa@sounex.app")return;const{data,error}=await sb.from("songs").select("*").order("created_at",{ascending:false});if(error)toast("No se pudieron cargar las canciones");songs=data||[];
- const{data:ar}=await sb.from("artists").select("*");artistsMap={};(ar||[]).forEach(a=>artistsMap[a.name]=a.photo_path)}
+ const{data:ar}=await sb.from("artists").select("*");artistsMap={};(ar||[]).forEach(a=>artistsMap[a.name]=a.photo_path);
+ const{data:us,error:eu}=await sb.rpc("admin_list_profiles");if(eu)toast("No se pudieron cargar los usuarios");users=us||[]}
 const grp=f=>{const m=new Map();songs.forEach(s=>{const k=f(s);if(k)m.set(k,(m.get(k)||0)+1)});return[...m]};
 const cov=s=>s.cover_path?`<img src="${esc(pub("covers",s.cover_path))}" alt="" loading="lazy">`:`<span class="ph" style="background:linear-gradient(135deg,${DP[Math.abs(s.title.length+s.artist.length)%DP.length]})"></span>`;
 const aph=n=>{const p=artistsMap[n];return p?`<img src="${esc(pub("artists",p))}" alt="" loading="lazy">`:`<span class="ph" style="background:linear-gradient(135deg,${DP[Math.abs(String(n).length)%DP.length]})"></span>`};
@@ -81,6 +82,7 @@ function render(){const v=$("#vw");
  if(view=="artists")v.innerHTML=artistsList(grp(s=>s.artist));
  if(view=="albums")v.innerHTML=lst(grp(s=>s.album?s.album+"\u0001"+s.artist:"").map(([k,n])=>{const p=k.split("\u0001");return[p[0],n,p[1]]}));
  if(view=="stats")v.innerHTML=`<p class="mu">Aún no se registran reproducciones, así que no hay conteos de escucha. Cuando la app las guarde, aparecerán aquí.</p><h2>Canciones por género</h2>${lst(grp(s=>s.genre))}`;
+ if(view=="users")v.innerHTML=users.length?`<div class="tb">`+users.map(u=>`<div class="sr" style="grid-template-columns:1fr auto auto"><span class="tt"><b>${esc(u.email)}</b><em>Desde ${new Date(u.created_at).toLocaleDateString("es")}</em></span><span class="mu">${u.is_premium?"Premium":"Gratis"}</span><span class="ac"><button data-pm="${u.user_id}|${u.is_premium?0:1}">${u.is_premium?"Quitar Premium":"Hacer Premium"}</button></span></div>`).join("")+`</div>`:`<p class="mu emp">Todavía no hay usuarios registrados en la app.</p>`;
  if(view=="cfg")v.innerHTML=`<div class="tb" style="padding:18px"><p style="margin:0 0 4px" class="mu">Sesión iniciada como</p><b>${esc(me.email)}</b><p class="mu">Para cambiar la contraseña o agregar otros administradores usa el panel de Supabase.</p><button class="btn g" id="lo2">Cerrar sesión</button></div>`}
 function go(v){view=v;$("#ttl").textContent=TT[v];document.querySelectorAll("#sb nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.v==v));$("#sb").classList.remove("open");render()}
 function form(id){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Supabase para guardar de verdad");return}
@@ -128,6 +130,6 @@ function ask(id){if(me&&me.email==="vista-previa@sounex.app"){toast("Conecta Sup
   await rm([["audio",s.audio_path],["covers",s.cover_path]]);m.close();toast("Canción eliminada");await load();render()};m.showModal()}
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
  if(d.v)go(d.v);else if(b.id=="mn")$("#sb").classList.toggle("open");else if(b.id=="lo"||b.id=="lo2")out();
- else if(d.a=="new")form();else if(d.e)form(d.e);else if(d.d)ask(d.d);else if(d.ae)artistForm(d.ae)});
+ else if(d.a=="new")form();else if(d.e)form(d.e);else if(d.d)ask(d.d);else if(d.ae)artistForm(d.ae);else if(d.pm){const[uid,val]=d.pm.split("|");sb.rpc("admin_set_premium",{target:uid,val:val=="1"}).then(({error})=>{if(error)toast("No se pudo actualizar");else{toast(val=="1"?"Usuario marcado como Premium":"Premium retirado");load().then(render)}})}});
 addEventListener("load",boot);
 </script></body></html>
