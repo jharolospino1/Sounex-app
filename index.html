@@ -108,6 +108,35 @@ svg.f{fill:currentColor;stroke:none}
 #mi{cursor:pointer}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important}#sp .nm span,#sp .ld i{animation-duration:.01s!important;animation-delay:0s!important}}
+#au{position:fixed;inset:0;z-index:96;display:none;overflow:auto;background:#0a0812}
+#au .wr{min-height:100%;display:flex;flex-direction:column;padding:0 26px calc(30px + env(safe-area-inset-bottom,0px));position:relative}
+#au .waves{position:absolute;top:0;left:0;right:0;height:340px;overflow:hidden;pointer-events:none}
+#au .waves svg{width:100%;height:100%}
+#au .skip2{align-self:flex-end;color:var(--mu);padding:calc(16px + env(safe-area-inset-top,0px)) 0 0;font-size:14px;position:relative;z-index:1}
+#au .hero{position:relative;text-align:center;padding-top:20px;z-index:1}
+#au .note{width:74px;height:74px;margin:0 auto 6px}
+#au .word{font-size:34px;font-weight:800;letter-spacing:-.03em}
+#au .word b{color:var(--ac)}
+#au .tag{color:var(--mu);font-size:14px;margin-top:2px}
+#au .ttl{font-size:26px;font-weight:800;letter-spacing:-.02em;text-align:center;margin-top:26px}
+#au .sub{color:var(--mu);font-size:14px;text-align:center;margin:6px 0 0;line-height:1.4}
+#au .fld{position:relative;margin-top:16px}
+#au .fld svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:19px;height:19px;color:var(--mu)}
+#au .fld input{width:100%;background:var(--card);border:1px solid #2a2536;border-radius:14px;padding:15px 16px 15px 46px;color:var(--tx);font:inherit}
+#au .fld .eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mu);background:none;padding:4px}
+#au .op{width:100%;border-radius:30px;padding:16px;font-size:16px;font-weight:700;margin-top:20px;color:var(--tx);background:linear-gradient(90deg,var(--ac),#7c1fe0)}
+#au .fp{display:block;text-align:center;color:var(--ac);font-size:14px;margin-top:16px;background:none}
+#au .or{display:flex;align-items:center;gap:12px;color:var(--mu);font-size:13px;margin:22px 0}
+#au .or::before,#au .or::after{content:"";flex:1;height:1px;background:#2a2536}
+#au .soc{display:flex;flex-direction:column;gap:12px}
+#au .soc button{display:flex;align-items:center;justify-content:center;gap:10px;background:transparent;border:1px solid #362f47;border-radius:30px;padding:14px;font-weight:600;color:var(--tx);width:100%}
+#au .soc svg{width:20px;height:20px;flex:none}
+#au .err{color:#ff6b81;min-height:18px;font-size:14px;margin-top:10px;text-align:center}
+#au form{display:block;position:relative;z-index:1;margin-top:auto;padding-top:24px}
+#au .swap{color:var(--mu);font-size:14px;text-align:center;margin-top:22px;padding-bottom:6px}
+#au .swap b{color:var(--ac);cursor:pointer;font-weight:700}
+#au .otpi{display:flex;gap:8px;margin-top:18px;justify-content:center}
+#au .otpi input{width:52px;text-align:center;font-size:24px;letter-spacing:0;padding:14px 0}
 </style></head><body>
 <div id="sp" aria-hidden="true"><div class="nm"><span style="--i:0">S</span><span style="--i:1">o</span><span style="--i:2">u</span><span style="--i:3">n</span><span style="--i:4">e</span><span style="--i:5">x</span></div><div class="ld"><i></i></div></div>
 <div id="au" role="dialog" aria-modal="true" aria-label="Cuenta"></div>
@@ -233,38 +262,50 @@ async function initReal(){const c=client();if(!c)return;
   if(!AR.some(a=>a[0]==r.artist))AR.push([r.artist,p[0],artPh[r.artist]||""]);if(i<4)MX.push([r.title,i]);if(r.genre&&!GE.some(g=>g[0]==r.genre))GE.push([r.genre,p[0]])});
  cur=0;el=0;playing=false;au.removeAttribute("src");auIdx=null;REAL=true;view();mini()}catch(e){}}
 
-let authUser=null,authMode="choice",authEm="";
+let authUser=null,authMode="login",authEm="";
+const WAVES=`<svg viewBox="0 0 400 300" preserveAspectRatio="none"><path d="M-20 90 C 80 40, 160 140, 260 80 S 420 20, 460 70" fill="none" stroke="#7c3aed" stroke-opacity=".55" stroke-width="2"/><path d="M-20 150 C 90 210, 170 90, 280 160 S 430 220, 470 150" fill="none" stroke="#7c3aed" stroke-opacity=".35" stroke-width="2"/></svg>`;
+const NOTE=`<svg class="note" viewBox="0 0 100 100"><defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs><path fill="url(#ng)" d="M62 12v46a15 15 0 10 9 13.7V34l14-4V18z"/></svg>`;
 const AUI={g:'<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 01-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.4 1.1-3.9 1.1-3 0-5.5-2-6.4-4.8H1.8v3C3.7 21.3 7.5 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.6a7.2 7.2 0 010-4.6v-3H1.8a12 12 0 000 10.6z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.5 0 3.7 2.7 1.8 6.6l3.8 3c.9-2.8 3.4-4.8 6.4-4.8z"/></svg>',
  f:'<svg viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12a12 12 0 10-13.9 11.9v-8.4H7.1V12h3v-2.6c0-3 1.8-4.6 4.5-4.6 1.3 0 2.6.2 2.6.2v2.9h-1.5c-1.5 0-1.9.9-1.9 1.8V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0024 12z"/></svg>'};
-function authRender(){const e=$("#au");if(!authUser===false){}
- if(authMode=="hide"){e.style.display="none";return}e.style.display="flex";const er=(id)=>`<p class="err" id="${id}" role="alert"></p>`;
- const social=`<div class="soc"><button data-soc="google">${AUI.g}Continuar con Google</button><button data-soc="facebook">${AUI.f}Continuar con Facebook</button></div><p class="or">o con tu correo</p>`;
- if(authMode=="choice")e.innerHTML=`<div class="bg" data-skip></div><div class="sh"><div class="lg">Sounex</div><p class="mu">Inicia sesión para guardar tus favoritos y tu música.</p><button class="op pri" data-am="login">Iniciar sesión con cuenta existente</button><button class="op" data-am="register">Registrarme</button><button class="skip" data-skip>Ahora no</button></div>`;
- if(authMode=="login")e.innerHTML=`<div class="bg" data-skip></div><div class="sh"><span class="back" data-am="choice">←</span><div class="lg">Iniciar sesión</div>${social}<form id="lf"><label>Correo<input type="email" id="lem" autocomplete="username" required></label><label>Contraseña<input type="password" id="lpw" autocomplete="current-password" required></label>${er("lerr")}<button class="op pri" style="margin-top:16px">Entrar</button></form><p class="swap">¿No tienes cuenta? <b data-am="register">Regístrate</b></p></div>`;
- if(authMode=="register")e.innerHTML=`<div class="bg" data-skip></div><div class="sh"><span class="back" data-am="choice">←</span><div class="lg">Crear cuenta</div>${social}<form id="rf"><label>Correo<input type="email" id="rem" autocomplete="username" required></label><label>Contraseña (mínimo 8 caracteres)<input type="password" id="rpw" autocomplete="new-password" required></label><label>Repite la contraseña<input type="password" id="rpw2" autocomplete="new-password" required></label>${er("rerr")}<button class="op pri" style="margin-top:16px">Crear cuenta</button></form><p class="swap">¿Ya tienes cuenta? <b data-am="login">Inicia sesión</b></p></div>`;
- if(authMode=="otp")e.innerHTML=`<div class="bg"></div><div class="sh"><div class="lg">Confirma tu correo</div><p class="mu">Te enviamos un código de 6 dígitos a ${authEm}.</p><form id="of"><div class="otpi"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="otp" autocomplete="one-time-code" required></div>${er("oerr")}<button class="op pri" style="margin-top:16px">Confirmar</button></form><p class="swap">¿No llegó? <b data-am="resend">Reenviar código</b></p></div>`;
+const EYE=o=>o?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 10.6a3 3 0 004.24 4.24M9.9 5.1A10.9 10.9 0 0112 5c6 0 10 7 10 7a17.6 17.6 0 01-3.2 4M6.6 6.6C4 8.3 2 12 2 12s1.4 2.5 3.9 4.4"/></svg>';
+const ICO={mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>'};
+let pwShown=false,pw2Shown=false;
+function head(kicker){return `<div class="waves">${WAVES}</div><div class="skip2" data-skip>Omitir</div><div class="hero">${NOTE}<div class="word">Soun<b>ex</b></div><div class="tag">Tu música, en un solo lugar</div></div>`}
+function fld(id,type,ph,icon,eyeToggle){return `<div class="fld">${ICO[icon]}<input id="${id}" type="${type}" placeholder="${ph}" autocomplete="${icon=='lock'?'current-password':'username'}">${eyeToggle?`<button type="button" class="eye" data-eye="${id}">${EYE(false)}</button>`:""}</div>`}
+function authRender(){const e=$("#au");
+ if(authMode=="hide"){e.style.display="none";return}e.style.display="block";const er=(id)=>`<p class="err" id="${id}" role="alert"></p>`;
+ const social=`<div class="or">o</div><div class="soc"><button type="button" data-soc="google">${AUI.g}Continuar con Google</button><button type="button" data-soc="facebook">${AUI.f}Continuar con Facebook</button></div>`;
+ if(authMode=="login")e.innerHTML=`<div class="wr">${head()}<div class="ttl">Iniciar sesión</div><p class="sub">Bienvenido de nuevo, disfruta de tu música favorita.</p><form id="lf">${fld("lem","email","Correo electrónico","mail")}${fld("lpw","password","Contraseña","lock",true)}${er("lerr")}<button class="op">Iniciar sesión</button><button type="button" class="fp" data-am="forgot">¿Olvidaste tu contraseña?</button>${social}<p class="swap">¿No tienes una cuenta? <b data-am="register">Regístrate</b></p></form></div>`;
+ if(authMode=="register")e.innerHTML=`<div class="wr">${head()}<div class="ttl">Crear cuenta</div><p class="sub">Regístrate para guardar tus favoritos y tu música.</p><form id="rf">${fld("rem","email","Correo electrónico","mail")}${fld("rpw","password","Contraseña (mínimo 8 caracteres)","lock",true)}${fld("rpw2","password","Repite la contraseña","lock",true)}${er("rerr")}<button class="op">Registrarme</button>${social}<p class="swap">¿Ya tienes una cuenta? <b data-am="login">Inicia sesión</b></p></form></div>`;
+ if(authMode=="forgot")e.innerHTML=`<div class="wr">${head()}<div class="ttl">Recuperar contraseña</div><p class="sub">Te enviaremos un enlace a tu correo para crear una nueva.</p><form id="ff">${fld("fem","email","Correo electrónico","mail")}${er("ferr")}<button class="op">Enviar enlace</button><p class="swap">¿Ya la recordaste? <b data-am="login">Inicia sesión</b></p></form></div>`;
+ if(authMode=="otp")e.innerHTML=`<div class="wr">${head()}<div class="ttl">Confirma tu correo</div><p class="sub">Te enviamos un código de 6 dígitos a ${authEm}.</p><form id="of"><div class="otpi"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="otp" autocomplete="one-time-code" required></div>${er("oerr")}<button class="op">Confirmar</button><p class="swap">¿No llegó? <b data-am="resend">Reenviar código</b></p></form></div>`;
  wireAuthForms()}
-function wireAuthForms(){const lf=$("#lf"),rf=$("#rf"),of=$("#of");
- if(lf)lf.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=lf.querySelector("button"),er=$("#lerr");if(!c)return er.textContent="La cuenta aún no está conectada.";b.disabled=true;
+function wireAuthForms(){const lf=$("#lf"),rf=$("#rf"),ff=$("#ff"),of=$("#of");
+ if(lf)lf.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=lf.querySelector("button.op"),er=$("#lerr");if(!c)return er.textContent="La cuenta aún no está conectada.";b.disabled=true;
   const{error}=await c.auth.signInWithPassword({email:$("#lem").value.trim(),password:$("#lpw").value});
   if(error)er.textContent="Correo o contraseña incorrectos.";else{authMode="hide";authRender();toast("Sesión iniciada")}b.disabled=false};
- if(rf)rf.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=rf.querySelector("button"),er=$("#rerr"),em=$("#rem").value.trim(),pw=$("#rpw").value;if(!c)return er.textContent="La cuenta aún no está conectada.";
+ if(rf)rf.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=rf.querySelector("button.op"),er=$("#rerr"),em=$("#rem").value.trim(),pw=$("#rpw").value;if(!c)return er.textContent="La cuenta aún no está conectada.";
   if(pw.length<8)return er.textContent="La contraseña debe tener al menos 8 caracteres.";
   if(pw!==$("#rpw2").value)return er.textContent="Las contraseñas no coinciden.";
   b.disabled=true;const{error}=await c.auth.signUp({email:em,password:pw});
   if(error)er.textContent=error.message.includes("registered")?"Ese correo ya tiene cuenta.":"No se pudo crear la cuenta.";
   else{authEm=em;authMode="otp";authRender();toast("Te enviamos un código a tu correo")}b.disabled=false};
- if(of)of.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=of.querySelector("button"),er=$("#oerr"),tok=$("#otp").value.trim();if(!c)return;
+ if(ff)ff.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=ff.querySelector("button.op"),er=$("#ferr"),em=$("#fem").value.trim();if(!c)return er.textContent="La cuenta aún no está conectada.";
+  b.disabled=true;const{error}=await c.auth.resetPasswordForEmail(em,{redirectTo:location.href});
+  if(error)er.textContent="No se pudo enviar el enlace.";else{toast("Te enviamos un enlace a tu correo");authMode="login";authRender()}b.disabled=false};
+ if(of)of.onsubmit=async ev=>{ev.preventDefault();const c=client(),b=of.querySelector("button.op"),er=$("#oerr"),tok=$("#otp").value.trim();if(!c)return;
   b.disabled=true;const{error}=await c.auth.verifyOtp({email:authEm,token:tok,type:"signup"});
   if(error)er.textContent="Código incorrecto o vencido.";else{authMode="hide";authRender();toast("Cuenta confirmada")}b.disabled=false}}
-$("#au").addEventListener("click",e=>{const b=e.target.closest("[data-am],[data-skip],[data-soc]");if(!b)return;
+$("#au").addEventListener("click",e=>{const b=e.target.closest("[data-am],[data-skip],[data-soc],[data-eye]");if(!b)return;
+ if(b.dataset.eye){const inp=$("#"+b.dataset.eye);inp.type=inp.type=="password"?"text":"password";b.innerHTML=EYE(inp.type=="text");return}
  if(b.dataset.skip!==undefined){authMode="hide";authRender();return}
  if(b.dataset.am=="resend"){const c=client();if(c&&authEm)c.auth.resend({type:"signup",email:authEm});toast("Código reenviado");return}
  if(b.dataset.am){authMode=b.dataset.am;authRender();return}
  if(b.dataset.soc){const c=client();if(!c)return;c.auth.signInWithOAuth({provider:b.dataset.soc,options:{redirectTo:location.href}}).then(({error})=>{if(error)toast("Ese inicio de sesión aún no está configurado")});return}});
 async function authBoot(){const c=client();if(!c){authMode="hide";return}
  const{data}=await c.auth.getSession();authUser=data.session?data.session.user:null;
- authMode=authUser?"hide":"choice";authRender();
+ authMode=authUser?"hide":"login";authRender();
  c.auth.onAuthStateChange((ev,session)=>{authUser=session?session.user:null;if(authUser&&authMode!="hide"){authMode="hide";authRender()}})}
 addEventListener("load",authBoot);
 addEventListener("load",initReal);
